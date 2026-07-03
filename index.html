@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLEU4 STABLE</title>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:#0b1b2b;
+color:white;
+text-align:center;
+}
+
+input,select,button{
+width:90%;
+padding:10px;
+margin:5px;
+border-radius:8px;
+border:none;
+}
+
+button{
+background:#1f6feb;
+color:white;
+font-weight:bold;
+cursor:pointer;
+}
+
+.card{
+background:#13263d;
+margin:10px;
+padding:10px;
+border-radius:10px;
+}
+
+.hidden{display:none;}
+
+.topbar{
+display:flex;
+justify-content:space-between;
+padding:10px;
+background:#081522;
+}
+.day{
+padding:10px;
+margin:3px;
+background:#1b2f4a;
+border-radius:6px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>BLEU4 LOGIN</h2>
+
+<div id="loginBox">
+<input id="login" placeholder="GRADE NOM">
+<select id="role">
+<option value="membre">MEMBRE</option>
+<option value="commandement">COMMANDEMENT</option>
+</select>
+
+<input id="pwd" type="password" placeholder="MDP commandement" style="display:none;">
+<button onclick="login()">ENTRER</button>
+</div>
+
+<div id="app" class="hidden">
+
+<div class="topbar">
+<span id="userLabel"></span>
+<button onclick="logout()">LOGOUT</button>
+</div>
+
+<h3>CALENDRIER</h3>
+<div id="calendar"></div>
+
+<div id="create" class="card hidden">
+<h3>Créer mission</h3>
+
+<input id="title" placeholder="titre">
+<input id="start" type="date">
+<input id="end" type="date">
+<input id="concerned" placeholder="tous ou logins">
+
+<button onclick="createMission()">Créer</button>
+</div>
+
+<div id="activities"></div>
+
+</div>
+
+<script>
+// ===================== USER =====================
+let currentUser = JSON.parse(localStorage.getItem("BLEU4_USER"));
+
+document.getElementById("role").onchange = (e)=>{
+document.getElementById("pwd").style.display =
+e.target.value==="commandement" ? "block":"none";
+};
+
+function login(){
+const v=document.getElementById("login").value.trim();
+const role=document.getElementById("role").value;
+const pwd=document.getElementById("pwd").value.trim();
+
+if(!v) return alert("vide");
+
+if(role==="commandement" && pwd!=="BLEU4ADMIN"){
+return alert("MDP faux");
+}
+
+const p=v.split(" ");
+
+currentUser={
+grade:p[0]||"",
+nom:p.slice(1).join(" ")||"",
+login:v.toUpperCase(),
+role
+};
+
+localStorage.setItem("BLEU4_USER",JSON.stringify(currentUser));
+initApp();
+}
+
+// ===================== APP =====================
+function initApp(){
+document.getElementById("loginBox").style.display="none";
+document.getElementById("app").classList.remove("hidden");
+
+document.getElementById("userLabel").innerText =
+currentUser.grade+" "+currentUser.nom;
+
+if(currentUser.role==="commandement"){
+document.getElementById("create").classList.remove("hidden");
+}
+
+renderCalendar();
+}
+
+function logout(){
+localStorage.clear();
+location.reload();
+}
+
+// ===================== CALENDAR =====================
+function renderCalendar(){
+const cal=document.getElementById("calendar");
+cal.innerHTML="";
+
+for(let i=1;i<=30;i++){
+const d=document.createElement("div");
+d.className="day";
+d.innerText="Jour "+i;
+cal.appendChild(d);
+}
+}
+
+// ===================== MISSIONS (LOCAL SIMPLE) =====================
+let missions=[];
+
+function createMission(){
+const title=document.getElementById("title").value.trim();
+const start=document.getElementById("start").value;
+const end=document.getElementById("end").value;
+const concerned=document.getElementById("concerned").value.trim();
+
+if(!title || !start || !end || !concerned){
+alert("Champs incomplets");
+return;
+}
+
+missions.push({title,start,end,concerned});
+renderMissions();
+}
+
+function renderMissions(){
+const box=document.getElementById("activities");
+box.innerHTML="<h3>Missions</h3>";
+
+missions.forEach(m=>{
+const div=document.createElement("div");
+div.className="card";
+div.innerHTML=`
+<h4>${m.title}</h4>
+<p>${m.start} → ${m.end}</p>
+<p>${m.concerned}</p>
+`;
+box.appendChild(div);
+});
+}
+
+// auto start
+if(currentUser){
+initApp();
+}
+</script>
+
+</body>
+</html>
